@@ -1,0 +1,41 @@
+pipeline {
+    environment {
+      AWSCreds = credentials("AWS_Creds")
+      AWS_DEFAULT_REGION = 'ap-south-1'
+      
+    }
+
+    agent any
+
+    stages {
+        stage("Log AWS Credentials") {
+            steps {
+                // all credential values are available for use but will be masked in console log
+                sh 'echo "AWSCreds is $AWSCreds"'
+            }
+        }
+        stage("Set AWS Credentials") {
+            steps {
+                sh 'aws configure set aws_access_key_id $AWSCreds_USR'
+                sh 'aws configure set aws_secret_access_key $AWSCreds_PSW'
+                sh 'aws configure set region $AWS_DEFAULT_REGION'
+            }
+        }
+         stage("Clone Cloudformation Repo") {
+            steps {
+                sh 'rm -rf Cloudformation'
+                sh 'git clone https://github.com/chethan110/Cloudformation.git'
+            }
+        }
+        stage("Validate S3 Cloudformation Template") {
+            steps {
+                sh 'aws cloudformation validate-template --template-body file://Cloudformation/S3/s3.yaml'
+            }
+        }
+        stage("Deploy S3 Cloudformation Template") {
+            steps {
+                sh 'aws cloudformation deploy --template-file Cloudformation/S3/s3.yaml --stack-name s3-stack --no-fail-on-empty-changeset'
+            }
+        }
+    }
+}
