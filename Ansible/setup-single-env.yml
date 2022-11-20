@@ -1,0 +1,52 @@
+Parameters:
+  NameOfService:
+    Description: The tag name associated with this EC2 instances.
+    Type: String
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access into the server
+    Type: AWS::EC2::KeyPair::KeyName
+Mappings:
+  RegionMap:
+    ap-south-1:
+      AMI: ami-01216e7612243e0ef
+Resources:
+  LnEc2InstanceWebServer1:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId:
+        Fn::FindInMap:
+          - RegionMap
+          - !Ref AWS::Region
+          - AMI
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [!Ref NameOfService, "webserver", "1"]]
+      SecurityGroups:
+        - !Ref LnSecurityGroup
+      KeyName: !Ref KeyName
+  LnEc2InstanceWebServer2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId:
+        Fn::FindInMap:
+          - RegionMap
+          - !Ref AWS::Region
+          - AMI
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [!Ref NameOfService, "webserver", "2"]]
+      SecurityGroups:
+        - !Ref LnSecurityGroup
+      KeyName: !Ref KeyName
+  LnElasticIp1:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref LnEc2InstanceWebServer1
+Outputs:
+  LnPublicIpAddressInstance1:
+    Description: The Public IP address for EC2 instances
+    Value: !GetAtt
+      - LnEc2InstanceWebServer1
+      - PublicIp
